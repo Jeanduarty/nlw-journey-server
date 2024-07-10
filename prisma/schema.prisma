@@ -21,5 +21,20 @@ model Trip {
   checkIn     DateTime?
   createdAt   DateTime  @default(now()) @map("created_at")
 
+  participants Participant[]
+
   @@map("trips")
+}
+
+model Participant {
+  id      String    @id @default(uuid())
+  name    String?
+  email   String
+  checkIn DateTime? @map("check_in")
+  isOwner Boolean   @default(false) @map("is_owner")
+  tripId  String    @map("trip_id")
+
+  trip Trip @relation(fields: [tripId], references: [id])
+
+  @@map("participants")
 }

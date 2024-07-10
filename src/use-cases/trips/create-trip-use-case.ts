@@ -3,6 +3,7 @@ import { TripsRepositories } from "../../repositories/trips-repositories";
 import dayjs from "dayjs";
 import { InvalidTripStartDateError } from "../erros/invalid-trip-start-date-error";
 import { InvalidTripEndDateError } from "../erros/invalid-trip-end-date-error";
+import { MailProvider } from "../../providers/MailProvier";
 
 interface CreateTripUseCaseRequest {
   destination: string,
@@ -17,7 +18,10 @@ interface CreateTripUseCaseResponse {
 }
 
 export class CreateTripUseCase {
-  constructor(private tripsRepositories: TripsRepositories) { }
+  constructor(
+    private tripsRepositories: TripsRepositories,
+    private mailProvider: MailProvider
+  ) { }
 
   async execute({
     destination,
