@@ -1,8 +1,13 @@
 import fastify from "fastify";
+import cors from "@fastify/cors"
 import { tripsRoutes } from "./controllers/trips/routes";
 import { ZodError } from "zod";
 
 export const app = fastify()
+
+app.register(cors, {
+  origin: '*'
+})
 
 app.register(tripsRoutes)
 
