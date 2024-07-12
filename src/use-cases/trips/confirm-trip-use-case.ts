@@ -1,16 +1,16 @@
 import { env } from "../../env.schema";
+import nodemailer from 'nodemailer';
 import { dayjs } from "../../lib/dayjs";
 import { getMailClient } from "../../lib/mail";
 import { ParticipantsRepositories } from "../../repositories/participants-repositories";
 import { TripsRepositories } from "../../repositories/trips-repositories";
-import { TripAlreadyConfirmed } from "../erros/trip-already-confirmed";
-import { TripNotFoundError } from "../erros/trip-not-found-error";
+import { ClientError } from "../erros/client-error";
 
 interface ConfirmTripUseCaseRequest {
   tripId: string
 }
 
-export class ConfirmTripUseCase {
+export class confirmTripUseCase {
   constructor(
     private tripsRepositories: TripsRepositories,
     private participantsRepositories: ParticipantsRepositories
@@ -21,11 +21,11 @@ export class ConfirmTripUseCase {
     const trip = await this.tripsRepositories.findById(tripId)
 
     if (!trip) {
-      throw new TripNotFoundError()
+      throw new ClientError("Trip not found.")
     }
 
     if (trip.checkIn) {
-      throw new TripAlreadyConfirmed()
+      throw new ClientError("Trip already confirm.")
     }
 
     await this.tripsRepositories.confirm(tripId)
@@ -40,13 +40,13 @@ export class ConfirmTripUseCase {
 
       await Promise.all(
         participants.map(async (participant) => {
-          if (participant.isOwner) {
+          if (participant.checkIn) {
             return
           }
 
           const confirmationLink = `${env.API_BASE_URL}/participants/${participant.id}/confirm`
 
-          await mail.sendMail({
+          const message = await mail.sendMail({
             from: {
               name: 'Equipe plann.er',
               address: 'oi@plann.er',
@@ -67,6 +67,8 @@ export class ConfirmTripUseCase {
             </div>
           `.trim(),
           })
+
+          console.log(nodemailer.getTestMessageUrl(message))
         })
       )
     }

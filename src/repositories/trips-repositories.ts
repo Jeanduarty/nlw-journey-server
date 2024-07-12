@@ -1,16 +1,15 @@
-import { Trip } from "@prisma/client";
+import { Prisma, Trip } from "@prisma/client";
 
-export interface tripDataProps {
-  destination: string;
-  startsAt: Date;
-  endsAt: Date;
-  ownerName: string;
-  ownerEmail: string;
-  emailsToInvite: string[]
+export interface updateProps {
+  tripId: string,
+  destination: string,
+  startsAt: Date,
+  endsAt: Date,
 }
 
 export interface TripsRepositories {
-  create(data: tripDataProps): Promise<Trip>
+  create(data: Prisma.TripCreateInput): Promise<Trip>
+  update(data: updateProps): Promise<Trip>
   findById(tripId: string): Promise<Trip | null>
   confirm(tripId: string): Promise<void>
 }

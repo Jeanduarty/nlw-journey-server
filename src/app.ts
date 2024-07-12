@@ -1,7 +1,10 @@
+import cors from "@fastify/cors";
 import fastify from "fastify";
-import cors from "@fastify/cors"
 import { tripsRoutes } from "./controllers/trips/routes";
-import { ZodError } from "zod";
+import { errorHandler } from "./error-handler";
+import { participantsRoutes } from "./controllers/participants/routes";
+import { linksRoutes } from "./controllers/links/route";
+import { activitiesRoutes } from "./controllers/activities/routes";
 
 export const app = fastify()
 
@@ -9,18 +12,9 @@ app.register(cors, {
   origin: '*'
 })
 
+app.setErrorHandler(errorHandler)
+
 app.register(tripsRoutes)
-
-app.setErrorHandler((err, _, reply) => {
-  if (err instanceof ZodError) {
-    return reply
-      .status(400)
-      .send({
-        message: "Validation error.", issues: err.format()
-      })
-  }
-
-  return reply.status(500).send({
-    message: "Internal server error."
-  })
-})
+app.register(participantsRoutes)
+app.register(linksRoutes)
+app.register(activitiesRoutes)

@@ -1,11 +1,11 @@
 import { PrismaParticipantsRepositories } from "../../repositories/prisma/prisma-participants-repositories";
 import { PrismaTripsRepositories } from "../../repositories/prisma/prisma-trips-repositories";
-import { createTripUseCase } from "../trips/create-trip-use-case";
+import { confirmTripUseCase } from "../trips/confirm-trip-use-case";
 
-export function MakeCreateTripUseCase() {
+export function MakeConfirmTripUseCase() {
   const tripsRepositories = new PrismaTripsRepositories()
   const participantsRepositories = new PrismaParticipantsRepositories() 
-  const useCase = new createTripUseCase(tripsRepositories, participantsRepositories);
+  const useCase = new confirmTripUseCase(tripsRepositories, participantsRepositories);
 
   return useCase;
 }

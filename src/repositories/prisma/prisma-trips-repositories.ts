@@ -1,35 +1,17 @@
-import { Trip } from "@prisma/client";
-import { tripDataProps, TripsRepositories } from "../trips-repositories";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
+import { TripsRepositories, updateProps } from "../trips-repositories";
 
 export class PrismaTripsRepositories implements TripsRepositories {
-  async create(data: tripDataProps): Promise<Trip> {
-
+  async create(data: Prisma.TripCreateInput) {
     const trip = await prisma.trip.create({
-      data: {
-        ...data,
-        participants: {
-          createMany: {
-            data: [
-              {
-                name: data.ownerName,
-                email: data.ownerEmail,
-                isOwner: true,
-                checkIn: new Date(),
-              },
-              ...data.emailsToInvite.map((email) => {
-                return { email }
-              }),
-            ],
-          },
-        },
-      },
+      data
     })
 
     return trip
   }
-
-  async findById(tripId: string): Promise<Trip | null> {
+  
+  async findById(tripId: string) {
     const trip = await prisma.trip.findUnique({
       where: {
         id: tripId
@@ -39,7 +21,7 @@ export class PrismaTripsRepositories implements TripsRepositories {
     return trip
   }
 
-  async confirm(tripId: string): Promise<void> {
+  async confirm(tripId: string) {
     await prisma.trip.update({
       data: {
         checkIn: new Date()
@@ -48,6 +30,21 @@ export class PrismaTripsRepositories implements TripsRepositories {
         id: tripId
       }
     })
+  }
+
+  async update({ tripId, destination, startsAt, endsAt }: updateProps) {
+    const trip = await prisma.trip.update({
+      data: {
+        destination,
+        startsAt,
+        endsAt
+      },
+      where: {
+        id: tripId
+      }
+    })
+
+    return trip
   }
 
 }

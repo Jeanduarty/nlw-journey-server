@@ -1,10 +1,11 @@
 import { Trip } from "@prisma/client";
-import { TripsRepositories } from "../../repositories/trips-repositories";
-import { InvalidTripStartDateError } from "../erros/invalid-trip-start-date-error";
-import { InvalidTripEndDateError } from "../erros/invalid-trip-end-date-error";
+import nodemailer from 'nodemailer';
 import { env } from "../../env.schema";
 import { dayjs } from "../../lib/dayjs";
 import { getMailClient } from "../../lib/mail";
+import { ParticipantsRepositories } from "../../repositories/participants-repositories";
+import { TripsRepositories } from "../../repositories/trips-repositories";
+import { ClientError } from "../erros/client-error";
 
 interface CreateTripUseCaseRequest {
   destination: string,
@@ -12,15 +13,18 @@ interface CreateTripUseCaseRequest {
   endsAt: Date,
   ownerName: string,
   ownerEmail: string,
-  emailsToInvite: string[]
+  emailsToInvite?: string[]
 }
 
 interface CreateTripUseCaseResponse {
   trip: Trip
 }
 
-export class CreateTripUseCase {
-  constructor(private tripsRepositories: TripsRepositories) { }
+export class createTripUseCase {
+  constructor(
+    private tripsRepositories: TripsRepositories,
+    private participantsRepositories: ParticipantsRepositories
+  ) { }
 
   async execute({
     destination,
@@ -32,21 +36,30 @@ export class CreateTripUseCase {
   }: CreateTripUseCaseRequest): Promise<CreateTripUseCaseResponse> {
 
     if (dayjs(startsAt).isBefore(new Date())) {
-      throw new InvalidTripStartDateError()
+      throw new ClientError("Invalid trip start date.")
     }
 
     if (dayjs(endsAt).isBefore(startsAt)) {
-      throw new InvalidTripEndDateError()
+      throw new ClientError("Invalid trip end date.")
     }
 
     const trip = await this.tripsRepositories.create({
       destination,
       startsAt,
-      endsAt,
-      ownerName,
-      ownerEmail,
-      emailsToInvite
+      endsAt
     })
+
+    await this.participantsRepositories.create({
+      name: ownerName,
+      email: ownerEmail,
+      checkIn: new Date(),
+      isOwner : true,
+      tripId: trip.id
+    })
+
+    if (emailsToInvite) {
+      await this.participantsRepositories.createMany(trip.id, emailsToInvite)
+    }
 
     const formattedStartDate = dayjs(startsAt).format('LL')
     const formattedEndDate = dayjs(endsAt).format('LL')
@@ -79,6 +92,8 @@ export class CreateTripUseCase {
       </div>
     `.trim(),
     })
+
+    console.log(nodemailer.getTestMessageUrl(message))
 
     return {
       trip
